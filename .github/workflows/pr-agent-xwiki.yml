@@ -56,23 +56,23 @@ jobs:
           skills.enabled: "true"
           skills.paths: '["$GITHUB_WORKSPACE/.pr-agent-context/xwiki/skills"]'
           skills.max_skills_tokens: "32000"
-          # --- Provider / model: OpenCode Zen (demo) ---
+          # --- Provider / model: OpenCode Zen ---
           # Muse Spark is served via the OpenAI *Responses* API, hence the
           # `openai/responses/` prefix (routes to {api_base}/responses rather
-          # than /chat/completions). If a demo run 404s on /responses, drop
-          # the `responses/` prefix and retry. Key: repo secret
-          # OPENCODE_API_KEY from https://opencode.ai/auth.
-          config.model: "openai/responses/muse-spark-1.3-contributor-free"
+          # than /chat/completions). The *free* contributor variant is
+          # client-locked ("OpenCode's free tier can only be used from within
+          # OpenCode"), so CI uses the paid model (~5-6c per review at this
+          # prompt size; it is also the tier that does not train on prompts).
+          # Key: repo secret OPENCODE_API_KEY from https://opencode.ai/auth.
+          config.model: "openai/responses/muse-spark-1.3"
           # Muse Spark is unknown to PR-Agent's model registry, so its budget
           # comes from custom_model_max_tokens — but the shipped default of
           # max_model_tokens (32000) clamps EVERY model via min() and starves
-          # the skills + repo-context prompt (~60k tokens). Lift both.
+          # the skills + repo-context prompt (~36k tokens). Lift both.
           config.custom_model_max_tokens: "128000"
           config.max_model_tokens: "128000"
-          # PR-Agent's shipped default fallback (gpt-5.6-terra) is a stock-
-          # OpenAI name, but the openai provider sends it to the same
-          # openai.api_base (Zen) anyway — point it at a free Zen model
-          # deliberately instead of leaving the default in place.
-          config.fallback_models: '["openai/big-pickle"]'
+          # Fallback rides the same openai.api_base (Zen); use a cheap Zen
+          # model rather than PR-Agent's shipped stock-OpenAI default.
+          config.fallback_models: '["openai/glm-5.3-flash"]'
           openai.api_base: "https://opencode.ai/zen/v1"
           openai.key: ${{ secrets.OPENCODE_API_KEY }}
