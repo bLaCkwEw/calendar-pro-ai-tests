@@ -32,6 +32,8 @@ require_can_be_split_review = false
 require_todo_scan = false
 num_max_findings = 3
 persistent_comment = true
+enable_review_labels_security = false
+enable_review_labels_effort = false
 extra_instructions = """You review XWiki (Java/Velocity/JS/Wiki-page) code. The XWiki skills in the prompt and .pr-agent-context/XWIKI-REVIEW-CONTEXT.md are authoritative over generic best practices. Route findings by changed files (Java: architecture/backward-compat/conventions/performance; tests: xwiki-test-guidelines; strings/.properties/.vm/.xml: xwiki-translations; public API: xwiki-javadoc; XAR pages: xwiki-xar-pages; deprecated API: xwiki-legacy; build: xwiki-build; Sonar-shaped: okf/sonarqube index + one family file). Cite the terminal rule source with its scope clause; follow pointer files one hop instead of citing them alone. Zero findings is acceptable; no praise, no PR summary. OUTPUT SAFETY (hard): describe missing mechanisms only (e.g. 'line 42 writes `$doc.title` without `$escapetool.xml`'); never write vulnerability/exploit/attack/XSS/CSRF/injection/traversal/CVE/CVSS or impact-justified severity. Keep 'Security concerns' and 'Recommended focus areas for review' brief: at most 1-2 short bullets each, no elaboration."""
 
 [github_action_config]
