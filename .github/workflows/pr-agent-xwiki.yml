@@ -63,6 +63,11 @@ jobs:
           # the `responses/` prefix and retry. Key: repo secret
           # OPENCODE_API_KEY from https://opencode.ai/auth.
           config.model: "openai/responses/muse-spark-1.3-contributor-free"
-          config.custom_model_max_tokens: "64000"
+          # Muse Spark is unknown to PR-Agent's model registry, so its budget
+          # comes from custom_model_max_tokens — but the shipped default of
+          # max_model_tokens (32000) clamps EVERY model via min() and starves
+          # the skills + repo-context prompt (~60k tokens). Lift both.
+          config.custom_model_max_tokens: "128000"
+          config.max_model_tokens: "128000"
           openai.api_base: "https://opencode.ai/zen/v1"
           openai.key: ${{ secrets.OPENCODE_API_KEY }}
