@@ -401,7 +401,17 @@
       <code>{{velocity}}
 #set ($discard = $xwiki.ssx.use('MoccaCalendar.Code.UpcomingEventsMacro'))
 #set ($startDate = $xwiki.jodatime.getDateTime())
-#set ($endDate = $startDate.plusYears(1))
+## Look-ahead window. Defaults to a year; can be narrowed with the `days`
+## macro parameter, and overridden per request so embedded panels can
+## preview shorter ranges without editing the embedding page.
+#set ($lookAheadDays = 365)
+#if ("$!{wikimacro.parameters.days}" != '')
+  #set ($lookAheadDays = $numbertool.toNumber($wikimacro.parameters.days).intValue())
+#end
+#if ("$!{request.days}" != '')
+  #set ($lookAheadDays = $numbertool.toNumber($request.days).intValue())
+#end
+#set ($endDate = $startDate.plusDays($lookAheadDays))
 #set ($dateTimeFormatter = $xwiki.jodatime.getDateTimeFormatterForPattern('dd/MM/yyyy HH:mm'))
 #set ($dateFormatter = $xwiki.jodatime.getDateTimeFormatterForPattern('dd/MM/yyyy'))
 #set ($timeFormatter = $xwiki.jodatime.getDateTimeFormatterForPattern('HH:mm'))
@@ -422,6 +432,8 @@
     #if ($wikimacro.parameters.limit &gt; 0 &amp;&amp; $foreach.count &gt; $wikimacro.parameters.limit)
       #break
     #end
+    #set ($eventDoc = $xwiki.getDocument($event.getEventDocRef()))
+    #set ($eventDescription = "$!eventDoc.getObject('MoccaCalendar.MoccaCalendarEventClass').getValue('description')")
     #set ($dateTimeInfo = "$dateTimeFormatter.print($event.getStartDate()) - $dateTimeFormatter.print($event.getEndDate())")
     #set ($startDay = $datetool.toDays($event.getStartDate().toDate()))
     #set ($endDay = $datetool.toDays($event.getEndDate().toDate()))
@@ -450,6 +462,14 @@
         (% class="moccacal-event-schedule" %)(((
           $services.icon.render('calendar') $dateTimeInfo
         )))
+        #if ("$!{eventDescription}" != '')
+          #if ($eventDescription.length() &gt; 160)
+            #set ($eventDescription = "${eventDescription.substring(0, 157)}...")
+          #end
+          (% class="moccacal-event-description" %)(((
+            $eventDescription
+          )))
+        #end
       )))
     )))
   #end
@@ -664,6 +684,96 @@
     </property>
     <property>
       <name>wikis</name>
+    </property>
+    <property>
+      <type/>
+    </property>
+  </object>
+  <object>
+    <name>MoccaCalendar.Code.UpcomingEventsMacro</name>
+    <number>2</number>
+    <className>XWiki.WikiMacroParameterClass</className>
+    <guid>9adbc305-acc1-4beb-a9bd-bdbee683e093</guid>
+    <class>
+      <name>XWiki.WikiMacroParameterClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <defaultValue>
+        <disabled>0</disabled>
+        <name>defaultValue</name>
+        <number>4</number>
+        <prettyName>Parameter default value</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </defaultValue>
+      <description>
+        <disabled>0</disabled>
+        <name>description</name>
+        <number>2</number>
+        <prettyName>Parameter description</prettyName>
+        <restricted>0</restricted>
+        <rows>5</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </description>
+      <mandatory>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>mandatory</name>
+        <number>3</number>
+        <prettyName>Parameter mandatory</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </mandatory>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Parameter name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <type>
+        <cache>0</cache>
+        <defaultValue>Unknown</defaultValue>
+        <disabled>0</disabled>
+        <displayType>input</displayType>
+        <freeText>allowed</freeText>
+        <largeStorage>1</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>type</name>
+        <number>5</number>
+        <picker>1</picker>
+        <prettyName>Parameter type</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator>|</separator>
+        <separators>|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>Unknown|Wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </type>
+    </class>
+    <property>
+      <defaultValue/>
+    </property>
+    <property>
+      <description>Number of days to look ahead when collecting events, defaults to 365. Narrow it for panels that should only show the coming days.</description>
+    </property>
+    <property>
+      <mandatory>0</mandatory>
+    </property>
+    <property>
+      <name>days</name>
     </property>
     <property>
       <type/>
