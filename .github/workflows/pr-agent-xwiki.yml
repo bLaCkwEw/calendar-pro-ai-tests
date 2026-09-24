@@ -69,5 +69,10 @@ jobs:
           # the skills + repo-context prompt (~60k tokens). Lift both.
           config.custom_model_max_tokens: "128000"
           config.max_model_tokens: "128000"
+          # PR-Agent's shipped default fallback (gpt-5.6-terra) is a stock-
+          # OpenAI name, but the openai provider sends it to the same
+          # openai.api_base (Zen) anyway — point it at a free Zen model
+          # deliberately instead of leaving the default in place.
+          config.fallback_models: '["openai/big-pickle"]'
           openai.api_base: "https://opencode.ai/zen/v1"
           openai.key: ${{ secrets.OPENCODE_API_KEY }}
