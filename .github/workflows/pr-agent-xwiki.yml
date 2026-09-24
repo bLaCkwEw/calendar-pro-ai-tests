@@ -23,14 +23,15 @@ on:
 jobs:
   pr_agent_job:
     # PR-Agent filters the actual command (/review, /ask, ...) itself; this
-    # guard keeps bots out, restricts to PR comments, and allows only org
-    # members. GitHub stamps every comment with author_association; on an
-    # org-owned repo members get MEMBER (admins included), outsiders get
-    # NONE / CONTRIBUTOR / FIRST_TIME_CONTRIBUTOR and the job is skipped.
+    # guard keeps bots out, restricts to PR comments, and allows only repo
+    # insiders. GitHub stamps every comment with author_association: OWNER
+    # (repo owner, e.g. on personal repos), MEMBER (org members on org-owned
+    # repos, admins included) — outsiders get NONE / CONTRIBUTOR /
+    # FIRST_TIME_CONTRIBUTOR and the job is skipped.
     if: >-
       ${{ github.event.sender.type != 'Bot' &&
           github.event.issue.pull_request &&
-          github.event.comment.author_association == 'MEMBER' }}
+          contains(fromJSON('["OWNER", "MEMBER"]'), github.event.comment.author_association) }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
