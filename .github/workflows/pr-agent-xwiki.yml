@@ -1,0 +1,67 @@
+# XWiki PR review — manual `/review` only (PR-Agent + XWiki skills)
+#
+# Design (see .pr-agent-context/README.md for full rationale):
+# - Manual trigger: runs only when an org member comments `/review` (also
+#   `/improve`, `/ask`) on a PR. No automatic review on open/sync.
+# - XWiki context: 9 curated skills + OKF vendored under
+#   `.pr-agent-context/xwiki/` (preserves `../../okf/` relative paths).
+#   PR-Agent injects *.md skill text (no scripts/assets) up to max_skills_tokens.
+# - skills.paths is host-only upstream: it CANNOT live in .pr_agent.toml, so it
+#   is set here in env (host-level config source). The container reads skills
+#   from the checkout below, hence the actions/checkout step (base branch only
+#   — PR-Agent fetches the diff via API, no PR code is executed).
+# - Provider: OpenCode Zen (demo) — model "Muse Spark 1.3 Free" through its
+#   OpenAI-compatible endpoint. Model + key live in the env block below;
+#   the key must exist as the repo secret OPENCODE_API_KEY.
+
+name: XWiki PR review (manual)
+
+on:
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  pr_agent_job:
+    # PR-Agent filters the actual command (/review, /ask, ...) itself; this
+    # guard keeps bots out, restricts to PR comments, and allows only org
+    # members. GitHub stamps every comment with author_association; on an
+    # org-owned repo members get MEMBER (admins included), outsiders get
+    # NONE / CONTRIBUTOR / FIRST_TIME_CONTRIBUTOR and the job is skipped.
+    if: >-
+      ${{ github.event.sender.type != 'Bot' &&
+          github.event.issue.pull_request &&
+          github.event.comment.author_association == 'MEMBER' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+    steps:
+      # Checked out so the PR-Agent container can read the vendored skills at
+      # $GITHUB_WORKSPACE/.pr-agent-context/xwiki/skills (base branch only).
+      - name: Checkout base branch for skill context
+        uses: actions/checkout@v4
+
+      - name: PR Agent review step
+        id: pragent
+        uses: the-pr-agent/pr-agent@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # --- Manual trigger only (overrides .pr_agent.toml; env wins) ---
+          github_action_config.auto_review: "false"
+          github_action_config.auto_describe: "false"
+          github_action_config.auto_improve: "false"
+          # --- XWiki skills (host-only; must be env, not .pr_agent.toml) ---
+          skills.enabled: "true"
+          skills.paths: '["$GITHUB_WORKSPACE/.pr-agent-context/xwiki/skills"]'
+          skills.max_skills_tokens: "32000"
+          # --- Provider / model: OpenCode Zen (demo) ---
+          # Muse Spark is served via the OpenAI *Responses* API, hence the
+          # `openai/responses/` prefix (routes to {api_base}/responses rather
+          # than /chat/completions). If a demo run 404s on /responses, drop
+          # the `responses/` prefix and retry. Key: repo secret
+          # OPENCODE_API_KEY from https://opencode.ai/auth.
+          config.model: "openai/responses/muse-spark-1.3-contributor-free"
+          config.custom_model_max_tokens: "64000"
+          openai.api_base: "https://opencode.ai/zen/v1"
+          openai.key: ${{ secrets.OPENCODE_API_KEY }}
