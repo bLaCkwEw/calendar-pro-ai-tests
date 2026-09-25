@@ -1899,6 +1899,13 @@ $xwiki.ssx.use("MoccaCalendar.Code.Macro", $parameterMap)
 &lt;/div&gt;
 ## end create event link
 #end
+#if($calendarObject &amp;&amp; "$!calendarObject.getValue('iCal')" != "")
+&lt;div class="moccacalendar-ical-hint"&gt;
+&lt;span class="glyphicon glyphicon-info-sign"&gt;&lt;/span&gt;
+$escapetool.xml('Events in this calendar come from an external iCal feed and cannot be edited here. Feed:')
+&lt;a href="$!calendarObject.getValue('iCal')" target="_blank"&gt;$!calendarObject.getValue('iCal')&lt;/a&gt;
+&lt;/div&gt;
+#end
 &lt;div id="calendar${calcounter}"&gt;&lt;/div&gt;
 &lt;script type="text/javascript"&gt;
 require.config({
